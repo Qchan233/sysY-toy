@@ -29,9 +29,25 @@
  */
 class  SysYParserBaseVisitor : public SysYParserVisitor {
 public:
-  static llvm::LLVMContext Context;
+  std::unique_ptr<llvm::LLVMContext> TheContext;
+  std::unique_ptr<llvm::Module> TheModule;
+  std::unique_ptr<llvm::IRBuilder<>> Builder;
+  llvm::BasicBlock *Block;
+
+  SysYParserBaseVisitor() {
+    TheContext = std::make_unique<llvm::LLVMContext>();
+    TheModule = std::make_unique<llvm::Module>("SysY Module", *TheContext);
+    Builder = std::make_unique<llvm::IRBuilder<>>(*TheContext);
+    Block = llvm::BasicBlock::Create(*TheContext, "entry", TheModule->getFunction("main"));
+    Builder->SetInsertPoint(Block);
+  }
+
   virtual std::any visitCompUnit(SysYParser::CompUnitContext *ctx) override {
-    return visitChildren(ctx);
+    llvm::Value *result = std::any_cast<llvm::Value*>(visitChildren(ctx));
+    std::cout << "Generated IR: " << std::endl;
+    result->print(llvm::errs()); 
+    std::cout << std::endl;
+    return nullptr;
   }
 
   virtual std::any visitDecl(SysYParser::DeclContext *ctx) override {
@@ -111,7 +127,8 @@ public:
   }
 
   virtual std::any visitExp_Num(SysYParser::Exp_NumContext *ctx) override {
-    return visitChildren(ctx);
+    llvm::Value* val = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, std::stoi(ctx->getText())));
+    return val;
   }
 
   virtual std::any visitExp_MulDivMod(SysYParser::Exp_MulDivModContext *ctx) override {
@@ -123,6 +140,21 @@ public:
   }
 
   virtual std::any visitExp_PlusMinus(SysYParser::Exp_PlusMinusContext *ctx) override {
+    llvm::Value* L = std::any_cast<llvm::Value*> (visit(ctx->exp(0)));
+    llvm::Value* R = std::any_cast<llvm::Value*> (visit(ctx->exp(1)));
+
+    auto op = ctx->op->getText()[0];
+    switch (op)
+    {
+    case '+':
+      return Builder->CreateAdd(L, R, "addtmp");
+      break;
+    case '-':
+      return Builder->CreateSub(L, R, "subtmp");
+      break;
+    default:
+      break;
+    }
     return visitChildren(ctx);
   }
 
@@ -152,4 +184,3 @@ public:
 
 
 };
-

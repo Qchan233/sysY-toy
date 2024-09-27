@@ -2132,10 +2132,11 @@ SysYParser::ExpContext* SysYParser::exp(int precedence) {
 
           if (!(precpred(_ctx, 2))) throw FailedPredicateException(this, "precpred(_ctx, 2)");
           setState(256);
+          antlrcpp::downCast<Exp_MulDivModContext *>(_localctx)->op = _input->LT(1);
           _la = _input->LA(1);
           if (!((((_la & ~ 0x3fULL) == 0) &&
             ((1ULL << _la) & 28672) != 0))) {
-          _errHandler->recoverInline(this);
+            antlrcpp::downCast<Exp_MulDivModContext *>(_localctx)->op = _errHandler->recoverInline(this);
           }
           else {
             _errHandler->reportMatch(this);
@@ -2154,11 +2155,12 @@ SysYParser::ExpContext* SysYParser::exp(int precedence) {
 
           if (!(precpred(_ctx, 1))) throw FailedPredicateException(this, "precpred(_ctx, 1)");
           setState(259);
+          antlrcpp::downCast<Exp_PlusMinusContext *>(_localctx)->op = _input->LT(1);
           _la = _input->LA(1);
           if (!(_la == SysYParser::PLUS
 
           || _la == SysYParser::MINUS)) {
-          _errHandler->recoverInline(this);
+            antlrcpp::downCast<Exp_PlusMinusContext *>(_localctx)->op = _errHandler->recoverInline(this);
           }
           else {
             _errHandler->reportMatch(this);

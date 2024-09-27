@@ -20,7 +20,11 @@ int main() {
     SysYParser parser(&tokens);    
 
     auto tree = parser.compUnit();
+    if (parser.getNumberOfSyntaxErrors() > 0) {
+        return 1;
+    }
     SysYParserBaseVisitor visitor;
+    visitor.visit(tree);
 
     return 0;
 }

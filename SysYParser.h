@@ -430,6 +430,7 @@ public:
   public:
     Exp_MulDivModContext(ExpContext *ctx);
 
+    antlr4::Token *op = nullptr;
     std::vector<ExpContext *> exp();
     ExpContext* exp(size_t i);
     antlr4::tree::TerminalNode *MUL();
@@ -452,6 +453,7 @@ public:
   public:
     Exp_PlusMinusContext(ExpContext *ctx);
 
+    antlr4::Token *op = nullptr;
     std::vector<ExpContext *> exp();
     ExpContext* exp(size_t i);
     antlr4::tree::TerminalNode *PLUS();
