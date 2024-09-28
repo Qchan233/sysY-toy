@@ -470,22 +470,73 @@ public:
   class  CondContext : public antlr4::ParserRuleContext {
   public:
     CondContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+   
+    CondContext() = default;
+    void copyFrom(CondContext *context);
+    using antlr4::ParserRuleContext::copyFrom;
+
     virtual size_t getRuleIndex() const override;
+
+   
+  };
+
+  class  Cond_EqContext : public CondContext {
+  public:
+    Cond_EqContext(CondContext *ctx);
+
+    antlr4::Token *op = nullptr;
+    std::vector<CondContext *> cond();
+    CondContext* cond(size_t i);
+    antlr4::tree::TerminalNode *EQ();
+    antlr4::tree::TerminalNode *NEQ();
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+  };
+
+  class  Cond_ExpContext : public CondContext {
+  public:
+    Cond_ExpContext(CondContext *ctx);
+
     ExpContext *exp();
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+  };
+
+  class  Cond_OrContext : public CondContext {
+  public:
+    Cond_OrContext(CondContext *ctx);
+
+    std::vector<CondContext *> cond();
+    CondContext* cond(size_t i);
+    antlr4::tree::TerminalNode *OR();
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+  };
+
+  class  Cond_CompareContext : public CondContext {
+  public:
+    Cond_CompareContext(CondContext *ctx);
+
+    antlr4::Token *op = nullptr;
     std::vector<CondContext *> cond();
     CondContext* cond(size_t i);
     antlr4::tree::TerminalNode *LT();
     antlr4::tree::TerminalNode *GT();
     antlr4::tree::TerminalNode *LE();
     antlr4::tree::TerminalNode *GE();
-    antlr4::tree::TerminalNode *EQ();
-    antlr4::tree::TerminalNode *NEQ();
-    antlr4::tree::TerminalNode *AND();
-    antlr4::tree::TerminalNode *OR();
-
 
     virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
-   
+  };
+
+  class  Cond_AndContext : public CondContext {
+  public:
+    Cond_AndContext(CondContext *ctx);
+
+    std::vector<CondContext *> cond();
+    CondContext* cond(size_t i);
+    antlr4::tree::TerminalNode *AND();
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
   };
 
   CondContext* cond();

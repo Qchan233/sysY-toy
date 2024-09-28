@@ -67,7 +67,15 @@ public:
 
     virtual std::any visitExp_PlusMinus(SysYParser::Exp_PlusMinusContext *context) = 0;
 
-    virtual std::any visitCond(SysYParser::CondContext *context) = 0;
+    virtual std::any visitCond_Eq(SysYParser::Cond_EqContext *context) = 0;
+
+    virtual std::any visitCond_Exp(SysYParser::Cond_ExpContext *context) = 0;
+
+    virtual std::any visitCond_Or(SysYParser::Cond_OrContext *context) = 0;
+
+    virtual std::any visitCond_Compare(SysYParser::Cond_CompareContext *context) = 0;
+
+    virtual std::any visitCond_And(SysYParser::Cond_AndContext *context) = 0;
 
     virtual std::any visitLVal(SysYParser::LValContext *context) = 0;
 

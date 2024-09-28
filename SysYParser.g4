@@ -75,20 +75,20 @@ stmt
 
 exp
    : unaryOp exp                            #Exp_Unary
-   | exp op=(MUL | DIV | MOD) exp            #Exp_MulDivMod
+   | exp op=(MUL | DIV | MOD) exp           #Exp_MulDivMod
    | exp op=(PLUS | MINUS) exp              #Exp_PlusMinus
-   | number                       #Exp_Num
-   | funcName L_PAREN funcRparams? R_PAREN #Exp_Func
-   | lVal                         #Exp_lVal                 
+   | number                                 #Exp_Num
+   | funcName L_PAREN funcRparams? R_PAREN  #Exp_Func
+   | lVal                                   #Exp_lVal                 
    | L_PAREN exp R_PAREN                    #Exp_Paren
    ;
 
 cond
-   : exp 
-   | cond (LT | GT | LE | GE) cond
-   | cond (EQ | NEQ) cond 
-   | cond AND cond 
-   | cond OR cond 
+   : exp                                #Cond_Exp 
+   | cond op=(LT | GT | LE | GE) cond   #Cond_Compare
+   | cond op=(EQ | NEQ) cond            #Cond_Eq
+   | cond AND cond                      #Cond_And 
+   | cond OR cond                       #Cond_Or
    ;
 
 lVal

@@ -1,3 +1,4 @@
-int a,b,c,d;
-float x;
-a+b+c+d*d;
+int foo() {
+    int a;
+    if (a+1) {}
+}

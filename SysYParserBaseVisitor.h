@@ -167,9 +167,9 @@ public:
   }
 
   virtual std::any visitExp_Unary(SysYParser::Exp_UnaryContext *ctx) override {
-    auto unaryOp = ctx->unaryOp()->getText();
+    auto unaryOp = ctx->unaryOp()->getText()[0];
     auto exp = ctx->exp();
-    switch (unaryOp[0])
+    switch (unaryOp)
     {
     case '+':
       return visit(exp);
@@ -238,8 +238,70 @@ public:
     return visitChildren(ctx);
   }
 
-  virtual std::any visitCond(SysYParser::CondContext *ctx) override {
-    return visitChildren(ctx);
+  virtual std::any visitCond_Exp(SysYParser::Cond_ExpContext *ctx) override {
+    return visit(ctx->exp());
+  }
+
+  virtual std::any visitCond_Or(SysYParser::Cond_OrContext *ctx) override {
+    auto L = std::any_cast<llvm::Value*>(visit(ctx->cond(0)));
+    auto R = std::any_cast<llvm::Value*>(visit(ctx->cond(1)));
+
+    return Builder->CreateOr(L, R, "ortmp");
+  }
+
+  virtual std::any visitCond_Compare(SysYParser::Cond_CompareContext *ctx) override {
+    auto L = std::any_cast<llvm::Value*>(visit(ctx->cond(0)));
+    auto R = std::any_cast<llvm::Value*>(visit(ctx->cond(1)));
+
+    auto op = ctx->op;
+
+    switch (op->getType())
+    {
+    case SysYParser::LT:
+      return Builder->CreateICmpULT(L, R, "cmptmp");
+      break;
+    case SysYParser::GT:
+      return Builder->CreateICmpUGT(L, R, "cmptmp");
+      break;
+    case SysYParser::LE:
+      return Builder->CreateICmpULE(L, R, "cmptmp");
+      break;
+    case SysYParser::GE:
+      return Builder->CreateICmpUGE(L, R, "cmptmp");
+      break;
+    default:
+      std::cout << "Unkown Operator" << std::endl;
+      assert(0);
+      break;
+    }
+  }
+  
+  virtual std::any visitCond_And(SysYParser::Cond_AndContext *ctx) override {
+    auto L = std::any_cast<llvm::Value*>(visit(ctx->cond(0)));
+    auto R = std::any_cast<llvm::Value*>(visit(ctx->cond(1)));
+
+    return Builder->CreateAnd(L, R, "andtmp");
+  }
+
+  virtual std::any visitCond_Eq(SysYParser::Cond_EqContext *ctx) override {
+    auto L = std::any_cast<llvm::Value*>(visit(ctx->cond(0)));
+    auto R = std::any_cast<llvm::Value*>(visit(ctx->cond(1)));
+
+    auto op = ctx->op;
+
+    switch (op->getType())
+    {
+      case SysYParser::EQ:
+        return Builder->CreateICmpEQ(L, R, "cmptmp");
+        break;
+      case SysYParser::NEQ:
+        return Builder->CreateICmpNE(L, R, "cmptmp");
+        break;
+      default:
+        std::cout << "Unkown Operator" << std::endl;
+        assert(0);
+        break;
+    }
   }
 
   virtual std::any visitLVal(SysYParser::LValContext *ctx) override {
@@ -261,4 +323,7 @@ public:
   virtual std::any visitConstExp(SysYParser::ConstExpContext *ctx) override {
     return visitChildren(ctx);
   }
+
+
 };
+

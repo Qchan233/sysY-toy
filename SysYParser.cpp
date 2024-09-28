@@ -2218,63 +2218,138 @@ SysYParser::CondContext::CondContext(ParserRuleContext *parent, size_t invokingS
   : ParserRuleContext(parent, invokingState) {
 }
 
-SysYParser::ExpContext* SysYParser::CondContext::exp() {
-  return getRuleContext<SysYParser::ExpContext>(0);
-}
-
-std::vector<SysYParser::CondContext *> SysYParser::CondContext::cond() {
-  return getRuleContexts<SysYParser::CondContext>();
-}
-
-SysYParser::CondContext* SysYParser::CondContext::cond(size_t i) {
-  return getRuleContext<SysYParser::CondContext>(i);
-}
-
-tree::TerminalNode* SysYParser::CondContext::LT() {
-  return getToken(SysYParser::LT, 0);
-}
-
-tree::TerminalNode* SysYParser::CondContext::GT() {
-  return getToken(SysYParser::GT, 0);
-}
-
-tree::TerminalNode* SysYParser::CondContext::LE() {
-  return getToken(SysYParser::LE, 0);
-}
-
-tree::TerminalNode* SysYParser::CondContext::GE() {
-  return getToken(SysYParser::GE, 0);
-}
-
-tree::TerminalNode* SysYParser::CondContext::EQ() {
-  return getToken(SysYParser::EQ, 0);
-}
-
-tree::TerminalNode* SysYParser::CondContext::NEQ() {
-  return getToken(SysYParser::NEQ, 0);
-}
-
-tree::TerminalNode* SysYParser::CondContext::AND() {
-  return getToken(SysYParser::AND, 0);
-}
-
-tree::TerminalNode* SysYParser::CondContext::OR() {
-  return getToken(SysYParser::OR, 0);
-}
-
 
 size_t SysYParser::CondContext::getRuleIndex() const {
   return SysYParser::RuleCond;
 }
 
+void SysYParser::CondContext::copyFrom(CondContext *ctx) {
+  ParserRuleContext::copyFrom(ctx);
+}
 
-std::any SysYParser::CondContext::accept(tree::ParseTreeVisitor *visitor) {
+//----------------- Cond_EqContext ------------------------------------------------------------------
+
+std::vector<SysYParser::CondContext *> SysYParser::Cond_EqContext::cond() {
+  return getRuleContexts<SysYParser::CondContext>();
+}
+
+SysYParser::CondContext* SysYParser::Cond_EqContext::cond(size_t i) {
+  return getRuleContext<SysYParser::CondContext>(i);
+}
+
+tree::TerminalNode* SysYParser::Cond_EqContext::EQ() {
+  return getToken(SysYParser::EQ, 0);
+}
+
+tree::TerminalNode* SysYParser::Cond_EqContext::NEQ() {
+  return getToken(SysYParser::NEQ, 0);
+}
+
+SysYParser::Cond_EqContext::Cond_EqContext(CondContext *ctx) { copyFrom(ctx); }
+
+
+std::any SysYParser::Cond_EqContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<SysYParserVisitor*>(visitor))
-    return parserVisitor->visitCond(this);
+    return parserVisitor->visitCond_Eq(this);
   else
     return visitor->visitChildren(this);
 }
+//----------------- Cond_ExpContext ------------------------------------------------------------------
 
+SysYParser::ExpContext* SysYParser::Cond_ExpContext::exp() {
+  return getRuleContext<SysYParser::ExpContext>(0);
+}
+
+SysYParser::Cond_ExpContext::Cond_ExpContext(CondContext *ctx) { copyFrom(ctx); }
+
+
+std::any SysYParser::Cond_ExpContext::accept(tree::ParseTreeVisitor *visitor) {
+  if (auto parserVisitor = dynamic_cast<SysYParserVisitor*>(visitor))
+    return parserVisitor->visitCond_Exp(this);
+  else
+    return visitor->visitChildren(this);
+}
+//----------------- Cond_OrContext ------------------------------------------------------------------
+
+std::vector<SysYParser::CondContext *> SysYParser::Cond_OrContext::cond() {
+  return getRuleContexts<SysYParser::CondContext>();
+}
+
+SysYParser::CondContext* SysYParser::Cond_OrContext::cond(size_t i) {
+  return getRuleContext<SysYParser::CondContext>(i);
+}
+
+tree::TerminalNode* SysYParser::Cond_OrContext::OR() {
+  return getToken(SysYParser::OR, 0);
+}
+
+SysYParser::Cond_OrContext::Cond_OrContext(CondContext *ctx) { copyFrom(ctx); }
+
+
+std::any SysYParser::Cond_OrContext::accept(tree::ParseTreeVisitor *visitor) {
+  if (auto parserVisitor = dynamic_cast<SysYParserVisitor*>(visitor))
+    return parserVisitor->visitCond_Or(this);
+  else
+    return visitor->visitChildren(this);
+}
+//----------------- Cond_CompareContext ------------------------------------------------------------------
+
+std::vector<SysYParser::CondContext *> SysYParser::Cond_CompareContext::cond() {
+  return getRuleContexts<SysYParser::CondContext>();
+}
+
+SysYParser::CondContext* SysYParser::Cond_CompareContext::cond(size_t i) {
+  return getRuleContext<SysYParser::CondContext>(i);
+}
+
+tree::TerminalNode* SysYParser::Cond_CompareContext::LT() {
+  return getToken(SysYParser::LT, 0);
+}
+
+tree::TerminalNode* SysYParser::Cond_CompareContext::GT() {
+  return getToken(SysYParser::GT, 0);
+}
+
+tree::TerminalNode* SysYParser::Cond_CompareContext::LE() {
+  return getToken(SysYParser::LE, 0);
+}
+
+tree::TerminalNode* SysYParser::Cond_CompareContext::GE() {
+  return getToken(SysYParser::GE, 0);
+}
+
+SysYParser::Cond_CompareContext::Cond_CompareContext(CondContext *ctx) { copyFrom(ctx); }
+
+
+std::any SysYParser::Cond_CompareContext::accept(tree::ParseTreeVisitor *visitor) {
+  if (auto parserVisitor = dynamic_cast<SysYParserVisitor*>(visitor))
+    return parserVisitor->visitCond_Compare(this);
+  else
+    return visitor->visitChildren(this);
+}
+//----------------- Cond_AndContext ------------------------------------------------------------------
+
+std::vector<SysYParser::CondContext *> SysYParser::Cond_AndContext::cond() {
+  return getRuleContexts<SysYParser::CondContext>();
+}
+
+SysYParser::CondContext* SysYParser::Cond_AndContext::cond(size_t i) {
+  return getRuleContext<SysYParser::CondContext>(i);
+}
+
+tree::TerminalNode* SysYParser::Cond_AndContext::AND() {
+  return getToken(SysYParser::AND, 0);
+}
+
+SysYParser::Cond_AndContext::Cond_AndContext(CondContext *ctx) { copyFrom(ctx); }
+
+
+std::any SysYParser::Cond_AndContext::accept(tree::ParseTreeVisitor *visitor) {
+  if (auto parserVisitor = dynamic_cast<SysYParserVisitor*>(visitor))
+    return parserVisitor->visitCond_And(this);
+  else
+    return visitor->visitChildren(this);
+}
 
 SysYParser::CondContext* SysYParser::cond() {
    return cond(0);
@@ -2301,6 +2376,10 @@ SysYParser::CondContext* SysYParser::cond(int precedence) {
   try {
     size_t alt;
     enterOuterAlt(_localctx, 1);
+    _localctx = _tracker.createInstance<Cond_ExpContext>(_localctx);
+    _ctx = _localctx;
+    previousContext = _localctx;
+
     setState(269);
     exp(0);
     _ctx->stop = _input->LT(-1);
@@ -2316,16 +2395,18 @@ SysYParser::CondContext* SysYParser::cond(int precedence) {
         _errHandler->sync(this);
         switch (getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 29, _ctx)) {
         case 1: {
-          _localctx = _tracker.createInstance<CondContext>(parentContext, parentState);
-          pushNewRecursionContext(_localctx, startState, RuleCond);
+          auto newContext = _tracker.createInstance<Cond_CompareContext>(_tracker.createInstance<CondContext>(parentContext, parentState));
+          _localctx = newContext;
+          pushNewRecursionContext(newContext, startState, RuleCond);
           setState(271);
 
           if (!(precpred(_ctx, 4))) throw FailedPredicateException(this, "precpred(_ctx, 4)");
           setState(272);
+          antlrcpp::downCast<Cond_CompareContext *>(_localctx)->op = _input->LT(1);
           _la = _input->LA(1);
           if (!((((_la & ~ 0x3fULL) == 0) &&
             ((1ULL << _la) & 7864320) != 0))) {
-          _errHandler->recoverInline(this);
+            antlrcpp::downCast<Cond_CompareContext *>(_localctx)->op = _errHandler->recoverInline(this);
           }
           else {
             _errHandler->reportMatch(this);
@@ -2337,17 +2418,19 @@ SysYParser::CondContext* SysYParser::cond(int precedence) {
         }
 
         case 2: {
-          _localctx = _tracker.createInstance<CondContext>(parentContext, parentState);
-          pushNewRecursionContext(_localctx, startState, RuleCond);
+          auto newContext = _tracker.createInstance<Cond_EqContext>(_tracker.createInstance<CondContext>(parentContext, parentState));
+          _localctx = newContext;
+          pushNewRecursionContext(newContext, startState, RuleCond);
           setState(274);
 
           if (!(precpred(_ctx, 3))) throw FailedPredicateException(this, "precpred(_ctx, 3)");
           setState(275);
+          antlrcpp::downCast<Cond_EqContext *>(_localctx)->op = _input->LT(1);
           _la = _input->LA(1);
           if (!(_la == SysYParser::EQ
 
           || _la == SysYParser::NEQ)) {
-          _errHandler->recoverInline(this);
+            antlrcpp::downCast<Cond_EqContext *>(_localctx)->op = _errHandler->recoverInline(this);
           }
           else {
             _errHandler->reportMatch(this);
@@ -2359,8 +2442,9 @@ SysYParser::CondContext* SysYParser::cond(int precedence) {
         }
 
         case 3: {
-          _localctx = _tracker.createInstance<CondContext>(parentContext, parentState);
-          pushNewRecursionContext(_localctx, startState, RuleCond);
+          auto newContext = _tracker.createInstance<Cond_AndContext>(_tracker.createInstance<CondContext>(parentContext, parentState));
+          _localctx = newContext;
+          pushNewRecursionContext(newContext, startState, RuleCond);
           setState(277);
 
           if (!(precpred(_ctx, 2))) throw FailedPredicateException(this, "precpred(_ctx, 2)");
@@ -2372,8 +2456,9 @@ SysYParser::CondContext* SysYParser::cond(int precedence) {
         }
 
         case 4: {
-          _localctx = _tracker.createInstance<CondContext>(parentContext, parentState);
-          pushNewRecursionContext(_localctx, startState, RuleCond);
+          auto newContext = _tracker.createInstance<Cond_OrContext>(_tracker.createInstance<CondContext>(parentContext, parentState));
+          _localctx = newContext;
+          pushNewRecursionContext(newContext, startState, RuleCond);
           setState(280);
 
           if (!(precpred(_ctx, 1))) throw FailedPredicateException(this, "precpred(_ctx, 1)");
