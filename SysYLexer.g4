@@ -4,6 +4,8 @@ CONST : 'const';
 
 INT : 'int';
 
+FLOAT : 'float';
+
 VOID : 'void';
 
 IF : 'if';

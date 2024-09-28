@@ -1,0 +1,72 @@
+[
+    {
+        "arguments": [
+            "g++",
+            "-c",
+            "-std=c++17",
+            "-I",
+            "/usr/local/include/antlr4-runtime/",
+            "-o",
+            "SysYParserBaseVisitor.o",
+            "SysYParserBaseVisitor.cpp"
+        ],
+        "directory": "/home/fishhhqi/codes/sysY",
+        "file": "SysYParserBaseVisitor.cpp"
+    },
+    {
+        "arguments": [
+            "g++",
+            "-c",
+            "-std=c++17",
+            "-I",
+            "/usr/local/include/antlr4-runtime/",
+            "-o",
+            "SysYParser.o",
+            "SysYParser.cpp"
+        ],
+        "directory": "/home/fishhhqi/codes/sysY",
+        "file": "SysYParser.cpp"
+    },
+    {
+        "arguments": [
+            "g++",
+            "-c",
+            "-std=c++17",
+            "-I",
+            "/usr/local/include/antlr4-runtime/",
+            "-o",
+            "main.o",
+            "main.cpp"
+        ],
+        "directory": "/home/fishhhqi/codes/sysY",
+        "file": "main.cpp"
+    },
+    {
+        "arguments": [
+            "g++",
+            "-c",
+            "-std=c++17",
+            "-I",
+            "/usr/local/include/antlr4-runtime/",
+            "-o",
+            "SysYParserVisitor.o",
+            "SysYParserVisitor.cpp"
+        ],
+        "directory": "/home/fishhhqi/codes/sysY",
+        "file": "SysYParserVisitor.cpp"
+    },
+    {
+        "arguments": [
+            "g++",
+            "-c",
+            "-std=c++17",
+            "-I",
+            "/usr/local/include/antlr4-runtime/",
+            "-o",
+            "SysYLexer.o",
+            "SysYLexer.cpp"
+        ],
+        "directory": "/home/fishhhqi/codes/sysY",
+        "file": "SysYLexer.cpp"
+    }
+]

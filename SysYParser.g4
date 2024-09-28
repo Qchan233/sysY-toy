@@ -10,14 +10,15 @@ compUnit
 decl
     : constDecl 
     | varDecl
-    | exp; 
+    | exp SEMICOLON; 
 
 
 constDecl
     : CONST bType constDef (COMMA constDef)* SEMICOLON;
 
 bType
-    : INT;
+    : INT
+    | FLOAT;
 
 constDef
     : IDENT (L_BRACKT constExp R_BRACKT)* ASSIGN constInitVal;
@@ -73,13 +74,13 @@ stmt
     ;
 
 exp
-   : L_PAREN exp R_PAREN                    #Exp_Paren
-   | lVal                         #Exp_lVal                 
-   | number                       #Exp_Num
-   | funcName L_PAREN funcRparams? R_PAREN #Exp_Func
-   | unaryOp exp                            #Exp_Unary
+   : unaryOp exp                            #Exp_Unary
    | exp op=(MUL | DIV | MOD) exp            #Exp_MulDivMod
    | exp op=(PLUS | MINUS) exp              #Exp_PlusMinus
+   | number                       #Exp_Num
+   | funcName L_PAREN funcRparams? R_PAREN #Exp_Func
+   | lVal                         #Exp_lVal                 
+   | L_PAREN exp R_PAREN                    #Exp_Paren
    ;
 
 cond

@@ -33,19 +33,27 @@ public:
   std::unique_ptr<llvm::Module> TheModule;
   std::unique_ptr<llvm::IRBuilder<>> Builder;
   llvm::BasicBlock *Block;
+  llvm::Type *BasicType;
+  std::map<std::string, llvm::AllocaInst *> NamedValues;
 
   SysYParserBaseVisitor() {
     TheContext = std::make_unique<llvm::LLVMContext>();
     TheModule = std::make_unique<llvm::Module>("SysY Module", *TheContext);
     Builder = std::make_unique<llvm::IRBuilder<>>(*TheContext);
-    Block = llvm::BasicBlock::Create(*TheContext, "entry", TheModule->getFunction("main"));
+    llvm::FunctionType *mainType = llvm::FunctionType::get(llvm::Type::getInt32Ty(*TheContext), {}, false);
+    llvm::Function *mainFunction = llvm::Function::Create(mainType, llvm::Function::ExternalLinkage, "main", *TheModule);
+
+    Block = llvm::BasicBlock::Create(*TheContext, "entry", mainFunction);
     Builder->SetInsertPoint(Block);
+
+    NamedValues.clear();
   }
 
   virtual std::any visitCompUnit(SysYParser::CompUnitContext *ctx) override {
-    llvm::Value *result = std::any_cast<llvm::Value*>(visitChildren(ctx));
+    visitChildren(ctx);
     std::cout << "Generated IR: " << std::endl;
-    result->print(llvm::errs()); 
+    auto mainFunction = TheModule->getFunction("main");
+    mainFunction->print(llvm::errs()); 
     std::cout << std::endl;
     return nullptr;
   }
@@ -55,11 +63,30 @@ public:
   }
 
   virtual std::any visitConstDecl(SysYParser::ConstDeclContext *ctx) override {
+    std::cout << "Not Implemented" << std::endl;
+    assert(0);
     return visitChildren(ctx);
   }
 
   virtual std::any visitBType(SysYParser::BTypeContext *ctx) override {
-    return visitChildren(ctx);
+    auto basicType = ctx->getText();
+    if (basicType == "int") {
+      BasicType = llvm::Type::getInt32Ty(*TheContext);
+    }
+    else if (basicType == "void")
+    {
+      BasicType = llvm::Type::getVoidTy(*TheContext);
+    }
+    else if (basicType == "float")
+    {
+      BasicType = llvm::Type::getFloatTy(*TheContext);
+    }
+    else
+    {
+      assert(0);
+    }
+    
+    return nullptr;
   }
 
   virtual std::any visitConstDef(SysYParser::ConstDefContext *ctx) override {
@@ -71,11 +98,28 @@ public:
   }
 
   virtual std::any visitVarDecl(SysYParser::VarDeclContext *ctx) override {
-    return visitChildren(ctx);
+    visit(ctx->bType());
+    // visit(ctx->varDef(0));
+    for (auto varDef : ctx->varDef())
+    {
+      visit(varDef);
+    }
+
+    return nullptr;
   }
 
   virtual std::any visitVarDef(SysYParser::VarDefContext *ctx) override {
-    return visitChildren(ctx);
+    std::string varName = ctx->IDENT()->getText();
+    llvm::GlobalVariable *var = TheModule->getGlobalVariable(varName);
+    if (var != nullptr)
+    {
+      std::cout << varName << "Variable already defined" << std::endl;
+      assert(0);
+    }
+
+    llvm::AllocaInst* allocaInst = Builder->CreateAlloca(BasicType, nullptr, varName);
+    NamedValues[varName] = allocaInst;
+    return nullptr;
   }
 
   virtual std::any visitInitVal(SysYParser::InitValContext *ctx) override {
@@ -119,10 +163,26 @@ public:
   }
 
   virtual std::any visitExp_Paren(SysYParser::Exp_ParenContext *ctx) override {
-    return visitChildren(ctx);
+    return visit(ctx->exp());
   }
 
   virtual std::any visitExp_Unary(SysYParser::Exp_UnaryContext *ctx) override {
+    auto unaryOp = ctx->unaryOp()->getText();
+    auto exp = ctx->exp();
+    switch (unaryOp[0])
+    {
+    case '+':
+      return visit(exp);
+      break;
+    case '-':
+      return Builder->CreateNeg(std::any_cast<llvm::Value*>(visit(exp)));
+      break; 
+    case '!':
+      return Builder->CreateNot(std::any_cast<llvm::Value*>(visit(exp)));
+      break;
+    default:
+      break;
+    }
     return visitChildren(ctx);
   }
 
@@ -132,11 +192,31 @@ public:
   }
 
   virtual std::any visitExp_MulDivMod(SysYParser::Exp_MulDivModContext *ctx) override {
+    llvm::Value* L = std::any_cast<llvm::Value*> (visit(ctx->exp(0)));
+    llvm::Value* R = std::any_cast<llvm::Value*> (visit(ctx->exp(1)));
+
+    auto op = ctx->op->getText()[0];
+    switch (op)
+    {
+    case '*':
+      return Builder->CreateMul(L, R, "multmp");
+      break;
+    case '/':
+      return Builder->CreateUDiv(L, R, "divtmp");
+      break;
+    case '%':
+      return Builder->CreateSRem(L, R, "modtmp");
+      break;
+    default:
+      break;
+    }
     return visitChildren(ctx);
   }
 
   virtual std::any visitExp_lVal(SysYParser::Exp_lValContext *ctx) override {
-    return visitChildren(ctx);
+    auto varName = ctx->lVal()->IDENT()->getText();
+    auto A = NamedValues[varName];
+    return (llvm::Value*) Builder->CreateLoad(A->getAllocatedType(), A, varName);
   }
 
   virtual std::any visitExp_PlusMinus(SysYParser::Exp_PlusMinusContext *ctx) override {
@@ -181,6 +261,4 @@ public:
   virtual std::any visitConstExp(SysYParser::ConstExpContext *ctx) override {
     return visitChildren(ctx);
   }
-
-
 };
