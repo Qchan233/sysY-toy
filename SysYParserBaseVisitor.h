@@ -147,14 +147,95 @@ public:
   }
 
   virtual std::any visitBlock(SysYParser::BlockContext *ctx) override {
-    return visitChildren(ctx);
+    llvm::Value* last = nullptr;
+    for (auto blockItem : ctx->blockItem())
+    {
+      last = std::any_cast<llvm::Value*>(visit(blockItem));
+    }
+    return last;
   }
 
   virtual std::any visitBlockItem(SysYParser::BlockItemContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual std::any visitStmt(SysYParser::StmtContext *ctx) override {
+  virtual std::any visitSmtAssign(SysYParser::SmtAssignContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitStmtExp(SysYParser::StmtExpContext *ctx) override {
+    return visit(ctx->exp());
+  }
+
+  virtual std::any visitStmtBlock(SysYParser::StmtBlockContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitStmtIf(SysYParser::StmtIfContext *ctx) override {
+    auto condition = std::any_cast<llvm::Value*>(visit(ctx->cond()));
+
+    // 如果条件是整型
+    if (condition->getType()->isIntegerTy()) {
+        condition = Builder->CreateICmpNE(condition, llvm::ConstantInt::get(condition->getType(), 0), "nonzero");
+    } 
+    // 如果条件是浮点型
+    else if (condition->getType()->isFloatTy() || condition->getType()->isDoubleTy()) {
+        condition = Builder->CreateFCmpONE(condition, llvm::ConstantFP::get(condition->getType(), 0.0), "nonzero");
+    }
+
+    auto TheFunction = Builder->GetInsertBlock()->getParent();
+    // Create blocks for the then and else cases.  Insert the 'then' block at the
+    // end of the function.
+    auto ThenBB = llvm::BasicBlock::Create(*TheContext, "then", TheFunction);
+    auto ElseBB = llvm::BasicBlock::Create(*TheContext, "else");
+    auto MergeBB = llvm::BasicBlock::Create(*TheContext, "ifcont");    
+
+    Builder->CreateCondBr(condition, ThenBB, ElseBB);
+
+    Builder->SetInsertPoint(ThenBB);
+
+    llvm::Value* ThenV = std::any_cast<llvm::Value*>(visit(ctx->stmt(0)));
+    if (!ThenV)
+      return nullptr;
+
+    Builder->CreateBr(MergeBB);
+    ThenBB = Builder->GetInsertBlock();
+
+    TheFunction->insert(TheFunction->end(), ElseBB);
+    Builder->SetInsertPoint(ElseBB);
+    auto ElseV = std::any_cast<llvm::Value*>(visit(ctx->stmt(1)));
+    if (!ElseV)
+      return nullptr;
+    if (ThenV->getType() != ElseV->getType())
+    {
+      std::cout << "Then and Else should have same type" << std::endl;
+      assert(0);
+    }
+    Builder->CreateBr(MergeBB);
+    ElseBB = Builder->GetInsertBlock();
+
+    TheFunction->insert(TheFunction->end(), MergeBB); 
+    Builder->SetInsertPoint(MergeBB);
+    auto PN = Builder->CreatePHI(ThenV->getType(), 2, "iftmp");
+
+    PN->addIncoming(ThenV, ThenBB);
+    PN->addIncoming(ElseV, ElseBB);
+    return (llvm::Value*) (PN);
+  }
+
+  virtual std::any visitStmtWhile(SysYParser::StmtWhileContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitStmtBreak(SysYParser::StmtBreakContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitStmtContinue(SysYParser::StmtContinueContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitStmtReturn(SysYParser::StmtReturnContext *ctx) override {
     return visitChildren(ctx);
   }
 
@@ -163,7 +244,7 @@ public:
   }
 
   virtual std::any visitExp_Paren(SysYParser::Exp_ParenContext *ctx) override {
-    return visit(ctx->exp());
+    return std::any_cast<llvm::Value*>(visit(ctx->exp()));
   }
 
   virtual std::any visitExp_Unary(SysYParser::Exp_UnaryContext *ctx) override {
@@ -228,10 +309,8 @@ public:
     {
     case '+':
       return Builder->CreateAdd(L, R, "addtmp");
-      break;
     case '-':
       return Builder->CreateSub(L, R, "subtmp");
-      break;
     default:
       break;
     }
@@ -239,7 +318,7 @@ public:
   }
 
   virtual std::any visitCond_Exp(SysYParser::Cond_ExpContext *ctx) override {
-    return visit(ctx->exp());
+    return std::any_cast<llvm::Value*>(visit(ctx->exp()));
   }
 
   virtual std::any visitCond_Or(SysYParser::Cond_OrContext *ctx) override {

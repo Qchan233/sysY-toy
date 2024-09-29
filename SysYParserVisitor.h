@@ -51,7 +51,21 @@ public:
 
     virtual std::any visitBlockItem(SysYParser::BlockItemContext *context) = 0;
 
-    virtual std::any visitStmt(SysYParser::StmtContext *context) = 0;
+    virtual std::any visitSmtAssign(SysYParser::SmtAssignContext *context) = 0;
+
+    virtual std::any visitStmtExp(SysYParser::StmtExpContext *context) = 0;
+
+    virtual std::any visitStmtBlock(SysYParser::StmtBlockContext *context) = 0;
+
+    virtual std::any visitStmtIf(SysYParser::StmtIfContext *context) = 0;
+
+    virtual std::any visitStmtWhile(SysYParser::StmtWhileContext *context) = 0;
+
+    virtual std::any visitStmtBreak(SysYParser::StmtBreakContext *context) = 0;
+
+    virtual std::any visitStmtContinue(SysYParser::StmtContinueContext *context) = 0;
+
+    virtual std::any visitStmtReturn(SysYParser::StmtReturnContext *context) = 0;
 
     virtual std::any visitExp_Func(SysYParser::Exp_FuncContext *context) = 0;
 

@@ -10,7 +10,7 @@ compUnit
 decl
     : constDecl 
     | varDecl
-    | exp SEMICOLON; 
+    | stmt;
 
 
 constDecl
@@ -63,14 +63,14 @@ blockItem
     | stmt;
 
 stmt
-    : lVal ASSIGN exp SEMICOLON 
-    | exp?  SEMICOLON 
-    | block 
-    | IF L_PAREN cond R_PAREN stmt (ELSE stmt)? 
-    | WHILE L_PAREN cond R_PAREN stmt
-    | BREAK SEMICOLON 
-    | CONTINUE SEMICOLON 
-    | RETURN exp? SEMICOLON 
+    : lVal ASSIGN exp SEMICOLON                 # SmtAssign
+    | exp?  SEMICOLON                           # StmtExp 
+    | block                                     # StmtBlock 
+    | IF L_PAREN cond R_PAREN stmt (ELSE stmt)? # StmtIf
+    | WHILE L_PAREN cond R_PAREN stmt           # StmtWhile    
+    | BREAK SEMICOLON                           # StmtBreak
+    | CONTINUE SEMICOLON                        # StmtContinue
+    | RETURN exp? SEMICOLON                     # StmtReturn
     ;
 
 exp
