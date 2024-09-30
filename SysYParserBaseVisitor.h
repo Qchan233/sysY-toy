@@ -27,6 +27,16 @@
  * This class provides an empty implementation of SysYParserVisitor, which can be
  * extended to create a visitor which only needs to handle a subset of the available methods.
  */
+
+#define ASSERT_MSG(expr, msg)                                         \
+    do {                                                              \
+        if (!(expr)) {                                                \
+            fprintf(stderr, "断言失败：%s\n文件：%s，行：%d\n消息：%s\n", \
+                    #expr, __FILE__, __LINE__, msg);                  \
+            std::abort();                                             \
+        }                                                             \
+    } while (0)
+
 class  SysYParserBaseVisitor : public SysYParserVisitor {
 public:
   std::unique_ptr<llvm::LLVMContext> TheContext;
@@ -108,16 +118,31 @@ public:
     return nullptr;
   }
 
-  virtual std::any visitVarDef(SysYParser::VarDefContext *ctx) override {
-    std::string varName = ctx->IDENT()->getText();
-    llvm::GlobalVariable *var = TheModule->getGlobalVariable(varName);
-    if (var != nullptr)
+  llvm::Type* computeType(std::vector<llvm::Value*> &array)
+  {
+    if (array.size() == 0)
     {
-      std::cout << varName << "Variable already defined" << std::endl;
-      assert(0);
+      return BasicType;
     }
-
-    llvm::AllocaInst* allocaInst = Builder->CreateAlloca(BasicType, nullptr, varName);
+    else
+    {
+      ASSERT_MSG(llvm::isa<llvm::ConstantInt>(array[0]), "数组大小应为常数");
+      int size = llvm::cast<llvm::ConstantInt>(array[0])->getSExtValue();
+      ASSERT_MSG(size >= 0, "数组大小不能为负数");
+      std::vector baseType(array.begin() + 1, array.end());
+      return llvm::ArrayType::get(computeType(baseType), size);
+    }
+  }
+  
+  virtual std::any visitVarDef(SysYParser::VarDefContext *ctx) override {
+    std::vector<llvm::Value*> array_info = {};
+    for (auto exp : ctx->constExp())
+    {
+      array_info.push_back(std::any_cast<llvm::Value*>(visit(exp)));
+    }
+    auto type = computeType(array_info);
+    auto varName = ctx->IDENT()->getText();
+    llvm::AllocaInst* allocaInst = Builder->CreateAlloca(type, nullptr, varName);
     NamedValues[varName] = allocaInst;
     return nullptr;
   }
