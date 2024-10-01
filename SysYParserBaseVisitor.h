@@ -12,11 +12,11 @@
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/Support/raw_ostream.h>
-#include <llvm/Support/TargetSelect.h>
 #include <llvm/IR/Type.h>
 #include <llvm/IR/Value.h>
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/IR/PassManager.h"
 #include <llvm/Support/SourceMgr.h>
-#include <llvm/Support/Debug.h>
 #include <llvm/Support/Error.h>
 
 #include "antlr4-runtime.h"
@@ -130,7 +130,8 @@ public:
       int size = llvm::cast<llvm::ConstantInt>(array[0])->getSExtValue();
       ASSERT_MSG(size >= 0, "数组大小不能为负数");
       std::vector baseType(array.begin() + 1, array.end());
-      return llvm::ArrayType::get(computeType(baseType), size);
+      auto computedType = llvm::ArrayType::get(computeType(baseType), size);
+      return computedType;
     }
   }
   
@@ -148,11 +149,48 @@ public:
   }
 
   virtual std::any visitInitVal(SysYParser::InitValContext *ctx) override {
-    return visitChildren(ctx);
+    return visitChildren(ctx); 
   }
 
   virtual std::any visitFuncDef(SysYParser::FuncDefContext *ctx) override {
-    return visitChildren(ctx);
+    auto typeString = ctx->funcType()->getText();
+    llvm::Type* returnType;
+    if (typeString == "int") {
+      returnType = llvm::Type::getInt32Ty(*TheContext); 
+    }
+    else if (typeString == "float") {
+      returnType = llvm::Type::getFloatTy(*TheContext);
+    }
+    else if (typeString == "void") {
+      returnType = llvm::Type::getVoidTy(*TheContext);
+    }
+    else {
+      ASSERT_MSG(0, "未知的函数返回类型");
+    };
+
+    std::string funcName = ctx->funcName()->IDENT()->getText();
+
+    std::vector <llvm::Type*> argTypes;
+    if (ctx->funcFparams() == nullptr) {
+      argTypes = {};
+    }
+    else{
+      argTypes = std::any_cast<std::vector<llvm::Type*>> (visit(ctx->funcFparams()));
+    }
+
+    llvm::FunctionType* funcType = llvm::FunctionType::get(returnType, argTypes, false);
+    llvm::Function* F = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, funcName, TheModule.get());
+
+    auto BB = llvm::BasicBlock::Create(*TheContext, "entry", F);
+    Builder->SetInsertPoint(BB);
+
+    if (auto RetVal = std::any_cast<llvm::Value*>(visit(ctx->block()))) {
+      Builder->CreateRet(RetVal);
+      F->print(llvm::errs());
+      return F;
+    }
+
+    return nullptr;
   }
 
   virtual std::any visitFuncName(SysYParser::FuncNameContext *ctx) override {
@@ -164,11 +202,27 @@ public:
   }
 
   virtual std::any visitFuncFparams(SysYParser::FuncFparamsContext *ctx) override {
-    return visitChildren(ctx);
+    std::vector<llvm::Type*> argTypes = {};
+
+    for (auto funcFparam : ctx->funcFparam())
+    {
+      argTypes.push_back(std::any_cast<llvm::Type*>(visit(funcFparam)));
+    }
+    return argTypes;
   }
 
   virtual std::any visitFuncFparam(SysYParser::FuncFparamContext *ctx) override {
-    return visitChildren(ctx);
+    std::vector<llvm::Value*> arraryInfo = {};
+    visit(ctx->bType());
+    if (ctx->children.size() > 2)
+    {
+      arraryInfo.push_back(llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0)));
+      for (auto exp : ctx->exp())
+      {
+        arraryInfo.push_back(std::any_cast<llvm::Value*>(visit(exp)));
+      }
+    }
+    return computeType(arraryInfo);
   }
 
   virtual std::any visitBlock(SysYParser::BlockContext *ctx) override {
