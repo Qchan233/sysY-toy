@@ -1,6 +1,10 @@
-int b=0;
-b+1;
-int foo() {2;}
-int bar() {c*c;}
-int c;
-c+1;
+int fib(int n) {
+    if (n <= 1){
+        1;
+    }
+    else {
+        fib(n-1)+fib(n-2);
+    }
+}
+
+fib(50);

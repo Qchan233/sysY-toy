@@ -364,7 +364,18 @@ public:
   }
 
   virtual std::any visitExp_Func(SysYParser::Exp_FuncContext *ctx) override {
-    return visitChildren(ctx);
+    auto funcName = ctx->funcName()->IDENT()->getText();
+    auto F = TheModule->getFunction(funcName);
+    ASSERT_MSG(F, "未找到函数");
+    std::vector<llvm::Value*> ArgsV;
+    if (ctx->funcRparams() != nullptr)
+    {
+      for (auto exp : ctx->funcRparams()->exp())
+      {
+        ArgsV.push_back(std::any_cast<llvm::Value*>(visit(exp)));
+      }
+    }
+    return (llvm::Value*) Builder->CreateCall(F, ArgsV, "calltmp");
   }
 
   virtual std::any visitExp_Paren(SysYParser::Exp_ParenContext *ctx) override {
