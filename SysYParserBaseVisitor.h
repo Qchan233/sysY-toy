@@ -280,7 +280,20 @@ public:
   }
 
   virtual std::any visitSmtAssign(SysYParser::SmtAssignContext *ctx) override {
-    return visitChildren(ctx);
+    auto lvalContext = ctx->lVal();
+    auto varName = lvalContext->IDENT()->getText();
+    auto A = getSymbol(varName);
+
+    auto value = std::any_cast<llvm::Value*>(visit(ctx->exp()));
+    std::vector<llvm::Value*> indexList;
+    for (auto exp : lvalContext->exp())
+    {
+      auto index = std::any_cast<llvm::Value*>(visit(exp));
+      indexList.push_back(index);
+    }
+
+    // auto elementPtr = Builder->CreateGEP(A->getType(), A, indexList);
+    return (llvm::Value*) Builder->CreateStore(value, A);
   }
 
   virtual std::any visitStmtExp(SysYParser::StmtExpContext *ctx) override {
@@ -432,7 +445,15 @@ public:
   virtual std::any visitExp_lVal(SysYParser::Exp_lValContext *ctx) override {
     auto varName = ctx->lVal()->IDENT()->getText();
     auto A = getSymbol(varName);
-    return (llvm::Value*) Builder->CreateLoad(A->getAllocatedType(), A, varName);
+    std::vector<llvm::Value*> indexList;
+    for (auto exp : ctx->lVal()->exp())
+    {
+      auto index = std::any_cast<llvm::Value*>(visit(exp));
+      indexList.push_back(index);
+    }
+    // A->getType()->dump();
+    // auto gep = Builder->CreateGEP(A->getType(), A, indexList);
+    return (llvm::Value*) Builder->CreateLoad(A->getAllocatedType(), A);
   }
 
   virtual std::any visitExp_PlusMinus(SysYParser::Exp_PlusMinusContext *ctx) override {
