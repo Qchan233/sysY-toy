@@ -27,7 +27,7 @@
  * This class provides an empty implementation of SysYParserVisitor, which can be
  * extended to create a visitor which only needs to handle a subset of the available methods.
  */
-
+using namespace llvm;
 #define ASSERT_MSG(expr, msg)                                         \
     do {                                                              \
         if (!(expr)) {                                                \
@@ -44,7 +44,26 @@ public:
   std::unique_ptr<llvm::IRBuilder<>> Builder;
   llvm::BasicBlock *Block;
   llvm::Type *BasicType;
-  std::map<std::string, llvm::AllocaInst *> NamedValues;
+  using NameValueMap = std::map<std::string, llvm::AllocaInst *>;
+  std::vector<NameValueMap> symbolStack;
+  int _insideFunc = 0;
+  // std::map<std::string, llvm::AllocaInst *> NamedValues;
+
+  void setSymbol(std::string name, llvm::AllocaInst *value) {
+    symbolStack[symbolStack.size() - 1][name] = value;
+  }
+
+  llvm::AllocaInst* getSymbol(std::string name) {
+    // search from top to bottom
+    for (int i = symbolStack.size() - 1; i >= _insideFunc; i--) {
+      auto it = &symbolStack[i];
+      auto symbol = it->find(name);
+      if (symbol != it->end()) {
+        return symbol->second;
+      }
+    }
+    ASSERT_MSG(0, "未找到符号");
+  }
 
   SysYParserBaseVisitor() {
     TheContext = std::make_unique<llvm::LLVMContext>();
@@ -56,7 +75,7 @@ public:
     Block = llvm::BasicBlock::Create(*TheContext, "entry", mainFunction);
     Builder->SetInsertPoint(Block);
 
-    NamedValues.clear();
+    symbolStack.push_back(NameValueMap());
   }
 
   virtual std::any visitCompUnit(SysYParser::CompUnitContext *ctx) override {
@@ -65,6 +84,8 @@ public:
     auto mainFunction = TheModule->getFunction("main");
     mainFunction->print(llvm::errs()); 
     std::cout << std::endl;
+    symbolStack.pop_back();
+
     return nullptr;
   }
 
@@ -144,7 +165,7 @@ public:
     auto type = computeType(array_info);
     auto varName = ctx->IDENT()->getText();
     llvm::AllocaInst* allocaInst = Builder->CreateAlloca(type, nullptr, varName);
-    NamedValues[varName] = allocaInst;
+    setSymbol(varName, allocaInst);
     return nullptr;
   }
 
@@ -153,6 +174,7 @@ public:
   }
 
   virtual std::any visitFuncDef(SysYParser::FuncDefContext *ctx) override {
+    auto mainBlock = Block;
     auto typeString = ctx->funcType()->getText();
     llvm::Type* returnType;
     if (typeString == "int") {
@@ -170,7 +192,10 @@ public:
 
     std::string funcName = ctx->funcName()->IDENT()->getText();
 
+    symbolStack.push_back(NameValueMap());
+
     std::vector <llvm::Type*> argTypes;
+    std::vector <std::string> argNames = {};
     if (ctx->funcFparams() == nullptr) {
       argTypes = {};
     }
@@ -184,9 +209,25 @@ public:
     auto BB = llvm::BasicBlock::Create(*TheContext, "entry", F);
     Builder->SetInsertPoint(BB);
 
+    if (ctx->funcFparams() != nullptr) {
+      for (auto argName : ctx->funcFparams()->funcFparam())
+      {
+        argNames.push_back(argName->IDENT()->getText());
+      }
+
+      for (int i=0; i < argNames.size(); i++) {
+        auto allocInst = Builder->CreateAlloca(argTypes[i], nullptr, argNames[i]);
+        setSymbol(argNames[i], allocInst);
+      }
+    }
+
+    _insideFunc = 1;
     if (auto RetVal = std::any_cast<llvm::Value*>(visit(ctx->block()))) {
+      _insideFunc = 0;
       Builder->CreateRet(RetVal);
       F->print(llvm::errs());
+      Builder->SetInsertPoint(mainBlock); 
+      symbolStack.pop_back();
       return F;
     }
 
@@ -243,6 +284,10 @@ public:
   }
 
   virtual std::any visitStmtExp(SysYParser::StmtExpContext *ctx) override {
+    if (ctx->exp() == nullptr)
+    {
+      return nullptr;
+    }
     return visit(ctx->exp());
   }
 
@@ -375,7 +420,7 @@ public:
 
   virtual std::any visitExp_lVal(SysYParser::Exp_lValContext *ctx) override {
     auto varName = ctx->lVal()->IDENT()->getText();
-    auto A = NamedValues[varName];
+    auto A = getSymbol(varName);
     return (llvm::Value*) Builder->CreateLoad(A->getAllocatedType(), A, varName);
   }
 
